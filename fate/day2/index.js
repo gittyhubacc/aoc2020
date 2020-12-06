@@ -1,9 +1,12 @@
-//To be executed on the day 2 data page
+//To be executed on the day 2 data page if using the commented out array lines
 
+var fs = require("fs");
+var text = fs.readFileSync("./input.txt", "utf-8");
+const array = text.split("\n");
 
 //day 2 part 1
 
-array=document.getElementsByTagName("pre")[0].innerText.split("\n")
+//array=document.getElementsByTagName("pre")[0].innerText.split("\n")
 rulePassPair=array.map(item => item.split(":"))
 rulePassPair.forEach(item => item[0] = item[0].split(" "))
 rulePassPair.forEach(item => item[0][0] = item[0][0].split("-").map(number => parseInt(number)))
@@ -24,7 +27,7 @@ console.log(valid);
 
 //day 2 part 2
 
-array=document.getElementsByTagName("pre")[0].innerText.split("\n")
+//array=document.getElementsByTagName("pre")[0].innerText.split("\n")
 rulePassPair=array.map(item => item.split(":"))
 rulePassPair.forEach(item => item[0] = item[0].split(" "))
 rulePassPair.forEach(item => item[0][0] = item[0][0].split("-").map(number => parseInt(number)))
