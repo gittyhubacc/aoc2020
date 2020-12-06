@@ -1,7 +1,7 @@
-//With array lines, can execute on input page in console
+//With commented out array lines, can execute on input page in console
 
 var fs = require("fs");
-var text = fs.readFileSync("./p3hsbf", "utf-8");
+var text = fs.readFileSync("./input.txt", "utf-8");
 const array = text.split("\n")
 
 
