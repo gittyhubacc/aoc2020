@@ -6,9 +6,11 @@ local part = { one = 0, two = 0 }
 local f = io.open(arg[1] or 'input.txt')
 for line in f:lines() do
 	if #line <= 0 then 
-		for _, list in pairs(found) do
-			if #list == group then
-				part.two = part.two + 1
+		if found then
+			for _, list in pairs(found) do
+				if #list == group then
+					part.two = part.two + 1
+				end
 			end
 		end
 		found = nil
