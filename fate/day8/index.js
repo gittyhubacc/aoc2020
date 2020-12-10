@@ -1,46 +1,122 @@
 var fs = require("fs");
 var text = fs.readFileSync("./input.txt", "utf-8");
 
-function main(data){
-    let current_total = 0, last_total = 0, prev1total = 0, prev2total = 0, prev3total = 0, sumThisIter = 0, diff1 = 0, diff3 = 1;
+function getData(){
+    //const text = document.getElementsByTagName("pre")[0].innerText;
+    const data = text.split("\n");
+    data.pop();
+    return data.map(instruction => {
+        const processed = instruction.split(" ");
+        return [ processed[0], parseInt(processed[1]) ];
+    });
+}
+
+//p1
+
+function goThroughP1(data){
+    let accumulator = 0;
+    let visited = new Set();
     for(let i = 0; i < data.length; i++){
-    	prev3total = prev2total;
-    	prev2total = prev1total;
-    	prev1total = current_total;
-    	current_total = 0;
-        sumThisIter = 0;
-        
-        if(data[i-1] == 0) sumThisIter++;
-        if(data[i] - data[i-2] <= 3){
-            if(data[i-2] == 0) sumThisIter++;
-            sumThisIter += prev2total;
+        if(visited.has(i)) break;
+        visited.add(i);
+        const instruction = data[i];
+        switch(instruction[0]){
+            case "jmp":
+                i += instruction[1]-1;
+                break;
+            case "acc":
+                accumulator += instruction[1];
+                break;
+            default:
+                break;
+        }
+    }
+    return accumulator;
+}
+
+console.log("Accumulator before the infinite loop: " + goThroughP1(getData()));
+
+
+//p2
+
+function getData1(text){
+    const data = text.split("\n");
+    data.pop();
+    return data.map(instruction => {
+        const processed = instruction.split(" ");
+        return [ processed[0], parseInt(processed[1]) ];
+    });
+}
+
+function goThrough1(data){
+    let accumulator = 0;
+    let visited = new Set();
+    let lastVisitedNoopOrJump = new Array();
+
+    for(let i = 0; i < data.length; i++){
+        const instruction = data[i];
+        switch(instruction[0]){
+            case "jmp":
+                lastVisitedNoopOrJump.push(i);
+                i += instruction[1]-1;
+                break;
+            case "acc":
+                accumulator += instruction[1];
+                break;
+            case "nop":
+                lastVisitedNoopOrJump.push(i);
+                break;
+            default:
+                break;
         }
 
-        if(data[i] - data[i-3] <= 3){
-            if(data[i-3] == 0) sumThisIter++;
-            sumThisIter += prev3total;
-        }
-
-        current_total += sumThisIter + prev1total;
-        
-        switch(data[i] - (data[i-1] ? data[i-1] : 0)){
-            case 1:
-            	diff1++;
-            	break;
-            case 3:
-            	diff3++;
-	}
-            
+        if(visited.has(i)) break;
+        visited.add(i);
     }
 
-    console.log("Part 1: " + diff1*diff3);
-    console.log("Part 2: " + current_total);
+    while(1){
+        let lastVisited = lastVisitedNoopOrJump.pop();
+        data[lastVisited][0] = data[lastVisited][0] == "jmp" ? "nop" : "jmp";
+        let returnData = goThroughEvaluate(data, lastVisited);
+        if(returnData) return goThroughGetAccumulator(data);
+        data[lastVisited][0] = data[lastVisited][0] == "jmp" ? "nop" : "jmp";
+    }
 }
 
-function getData(text){
-    const data= text.split("\n");
-    data.pop();
-    return [0, ...data.map(item => parseInt(item)).sort((a, b) => a-b)]
+function goThroughEvaluate(data, start = 0){
+    let visited = new Set();
+    for(let i = start; i < data.length; i++){
+        if(visited.has(i)) return false;
+        visited.add(i);
+        const instruction = data[i];
+        switch(instruction[0]){
+            case "jmp":
+                i += instruction[1]-1;
+                break;
+            default:
+                break;
+        }
+    }
+    return true;
 }
 
-main(getData(text));
+function goThroughGetAccumulator(data){
+    let accumulator = 0;
+    for(let i = 0; i < data.length; i++){
+        const instruction = data[i];
+        switch(instruction[0]){
+            case "jmp":
+                i += instruction[1]-1;
+                break;
+            case "acc":
+                accumulator += instruction[1];
+                break;
+            default:
+                break;
+        }
+    }
+    return accumulator;
+}
+
+console.log("Corrected program output: " + goThrough1(getData1(text)));
+//console.log("Corrected program output: " + goThrough1(getData1(document.getElementsByTagName("pre")[0].innerText)));
