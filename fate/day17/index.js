@@ -1,75 +1,108 @@
-function get_data(text){
+function get_data(text, dims){
+    dims -= 2;
+    if(dims < 0) return "The number of dimensions must be at least 2";
     text = text.split("\n").map(row => row.split(""))
     text.pop();
     const grid = {};
+    const dimArr = [];
+    for(let i = 0; i < dims; i++) dimArr.push(0);
     for(let i = 0; i < text.length; i++){
         for(let j = 0; j < text[0].length; j++){
             if(text[i][j] == "#"){
-                if(!grid[i]) grid[i] = {};
-                if(!grid[i][j]) grid[i][j] = {};
-                grid[i][j][0] = "#";
+                if(dimArr.length == 0) insert_elem(grid, [i, j]);
+                insert_elem(grid, [i, j, ...dimArr]);
             }
         }
     }
     return grid;
 }
 
-function populate_surrounding(coords, cache){
+function populate_surrounding(coords, cache){ //will use a cache map and increment all the surrounding coordinates, surrounding a coord in n dimensions
+    let coords_key = coords.reduce((str, current) => str += current+",", "");
+    coords_key = coords_key.slice(0, coords_key.length-1);
     coords = coords.map(coord => parseInt(coord));
-    const to_key = (input) => input.reduce((total, coord) => total += coord.toString()+",", "");
+    const keys = surrounding_coords(coords);
+    for(const key of keys){
+        if(!cache[key]) cache[key] = 0;
+        if(key == coords_key) continue;
+        cache[key]++;
+    }
+}
+
+function surrounding_coords(coord, dims){ //gets all surrounding coords in the number of dimensions the coord is listed to be in
+    if(!dims) dims = coord.length;
+    if(dims == 1){
+        const retStrs = [];
+        for(let i = -1; i <= 1; i++) retStrs.push((coord[coord.length-1]+i).toString());
+        return retStrs;
+    }
+    const retStrs = [];
     for(let i = -1; i <= 1; i++){
-        for(let j = -1; j <= 1; j++){
-            for(let k = -1; k <= 1; k++){
-                if(i == 0 && j == 0 && k == 0) continue;
-                const key = to_key([coords[0]+i, coords[1]+j, coords[2]+k]);
-                if(!cache[key]) cache[key] = 0;
-                cache[key]++;
-            }
+        const returnedStrs = surrounding_coords(coord, dims-1);
+        for(const str of returnedStrs){
+            retStrs.push(coord[coord.length-dims]+i+","+str);
         }
     }
+    return retStrs;
+}
+
+function get_elems(map){ //will recursively get all elements in a map
+    const entries = Object.entries(map);
+    const keys = [];
+    if(typeof entries[0][1] == "object"){
+        for(const entry of entries){
+            const retVals = get_elems(entry[1]);
+            for(const val of retVals){
+                keys.push([entry[0], ...val]);
+            }
+        }
+    }else if(entries[0][1] == "#"){
+        for(const entry of entries){
+            keys.push([entry[0]]);
+        }
+    }
+    return keys;
 }
 
 function update(data){
     const cache_map = {};
-    for(const x of Object.entries(data)){
-        for(const y of Object.entries(x[1])){
-            for(const z of Object.entries(y[1])){
-                populate_surrounding([x[0],y[0],z[0]], cache_map)
-            }
-        }
+    const elems = get_elems(data);
+    for(const elem of elems){
+        populate_surrounding(elem, cache_map);
     }
     const new_data = {};
+    let count = 0;
     for(const item of Object.entries(cache_map)){
         if(item[1] == 3){
             const coord = item[0].split(",");
-            coord.pop();
-            if(!new_data[coord[0]]) new_data[coord[0]] = {};
-            if(!new_data[coord[0]][coord[1]]) new_data[coord[0]][coord[1]] = {};
-            new_data[coord[0]][coord[1]][coord[2]] = "#";
+            insert_elem(new_data, coord);
+            count++;
         }else if(item[1] == 2){
             const coord = item[0].split(",");
-            coord.pop();
-            if(data[coord[0]]?.[coord[1]]?.[coord[2]] == "#"){
-                if(!new_data[coord[0]]) new_data[coord[0]] = {};
-                if(!new_data[coord[0]][coord[1]]) new_data[coord[0]][coord[1]] = {};
-                new_data[coord[0]][coord[1]][coord[2]] = "#";
-            }
-        }
-    }
-    let count = 0;
-    for(const x of Object.entries(new_data)){
-        for(const y of Object.entries(x[1])){
-            for(const z of Object.entries(y[1])){
+            if(check_elem(data, coord)){
                 count++;
+                insert_elem(new_data, coord);
             }
         }
     }
     return [count, new_data];
 }
 
+function check_elem(map, coord){
+    if(coord.length == 1) return map[coord[0]] == "#";
+    if(!map[coord[0]]) return false;
+    return check_elem(map[coord[0]], coord.slice(1));
+}
 
-function do_p1(){
-    let data = get_data(document.getElementsByTagName("pre")[0].innerText)
+function insert_elem(map, coord){
+    if(coord.length == 1) return map[coord[0]] = "#";
+    if(!map[coord[0]]) map[coord[0]] = {};
+    insert_elem(map[coord[0]], coord.slice(1));
+    return map;
+}
+
+function get_active_cubes(input, dimensions){
+    let data = get_data(input, dimensions)
     let count = 0;
     for(let i = 0; i < 6; i++){
         [count, data] = update(data);
@@ -77,92 +110,7 @@ function do_p1(){
     return count;
 }
 
-function populate_surrounding_p2(coords, cache){
-    coords = coords.map(coord => parseInt(coord));
-    const to_key = (input) => input.reduce((total, coord) => total += coord.toString()+",", "");
-    for(let i = -1; i <= 1; i++){
-        for(let j = -1; j <= 1; j++){
-            for(let k = -1; k <= 1; k++){
-                for(let h = -1; h <= 1; h++){
-                    if(i == 0 && j == 0 && k == 0 && h == 0) continue;
-                    const key = to_key([coords[0]+i, coords[1]+j, coords[2]+k, coords[3]+h]);
-                    if(!cache[key]) cache[key] = 0;
-                    cache[key]++;
-                }
-            }
-        }
-    }
-}
-
-function update_p2(data){
-    const cache_map = {};
-    for(const x of Object.entries(data)){
-        for(const y of Object.entries(x[1])){
-            for(const z of Object.entries(y[1])){
-                for(const w of Object.entries(z[1])){
-                    populate_surrounding_p2([x[0],y[0],z[0], w[0]], cache_map)
-                }
-            }
-        }
-    }
-    const new_data = {};
-    for(const item of Object.entries(cache_map)){
-        if(item[1] == 3){
-            const coord = item[0].split(",");
-            coord.pop();
-            if(!new_data[coord[0]]) new_data[coord[0]] = {};
-            if(!new_data[coord[0]][coord[1]]) new_data[coord[0]][coord[1]] = {};
-            if(!new_data[coord[0]][coord[1]][coord[2]]) new_data[coord[0]][coord[1]][coord[2]] = {};
-            new_data[coord[0]][coord[1]][coord[2]][coord[3]] = "#";
-        }else if(item[1] == 2){
-            const coord = item[0].split(",");
-            coord.pop();
-            if(data[coord[0]]?.[coord[1]]?.[coord[2]]?.[coord[3]] == "#"){
-                if(!new_data[coord[0]]) new_data[coord[0]] = {};
-                if(!new_data[coord[0]][coord[1]]) new_data[coord[0]][coord[1]] = {};
-                if(!new_data[coord[0]][coord[1]][coord[2]]) new_data[coord[0]][coord[1]][coord[2]] = {};
-                new_data[coord[0]][coord[1]][coord[2]][coord[3]] = "#";
-            }
-        }
-    }
-    let count = 0;
-    for(const x of Object.entries(new_data)){
-        for(const y of Object.entries(x[1])){
-            for(const z of Object.entries(y[1])){
-                for(const w of Object.entries(z[1])){
-                    count++;
-                }
-            }
-        }
-    }
-    return [count, new_data];
-}
-
-function get_data_p2(text){
-    text = text.split("\n").map(row => row.split(""))
-    text.pop();
-    const grid = {};
-    for(let i = 0; i < text.length; i++){
-        for(let j = 0; j < text[0].length; j++){
-            if(text[i][j] == "#"){
-                if(!grid[i]) grid[i] = {};
-                if(!grid[i][j]) grid[i][j] = {};
-                if(!grid[i][j][0]) grid[i][j][0] = {};
-                grid[i][j][0][0] = "#";
-            }
-        }
-    }
-    return grid;
-}
-
-function do_p2(){
-    let data = get_data_p2(document.getElementsByTagName("pre")[0].innerText)
-    let count = 0;
-    for(let i = 0; i < 6; i++){
-        [count, data] = update_p2(data);
-    }
-    return count;
-}
-
-console.log("Part 1: " + do_p1());
-console.log("Part 2: " + do_p2());
+console.log("Part 1: " + get_active_cubes(document.getElementsByTagName("pre")[0].innerText, 3));
+console.log("Part 2: " + get_active_cubes(document.getElementsByTagName("pre")[0].innerText, 4));
+console.log("Part 3: " + get_active_cubes(document.getElementsByTagName("pre")[0].innerText, 5));
+console.log("Part 4: " + get_active_cubes(document.getElementsByTagName("pre")[0].innerText, 6));
