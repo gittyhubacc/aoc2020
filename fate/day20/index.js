@@ -1,13 +1,19 @@
 //part 1
 function generate_tiles(top, bottom, left, right, id){
     const tiles = [];
-    //6 transformations are possible with horizontal flips, vertical flips, and 180deg rotates
-    tiles.push([id*10, [top, bottom, left, right]]);
-    tiles.push([id*10 + 1, [bottom, top, right, left]]);
-    tiles.push([id*10 + 2, [bottom, top, flip(left), flip(right)]]);
-    tiles.push([id*10 + 3, [top, bottom, flip(right), flip(left)]]);
-    tiles.push([id*10 + 4, [flip(top), flip(bottom), right, left]]);
-    tiles.push([id*10 + 5, [flip(bottom), flip(top), left, right]]);
+    //12 transformations are possible with horizontal flips, vertical flips, and 90deg rotations
+    tiles.push([id*12, [top, bottom, left, right]]);
+    tiles.push([id*12 + 1, [left, right, bottom, top]]);
+    tiles.push([id*12 + 2, [bottom, top, right, left]]);
+    tiles.push([id*12 + 3, [right, left, top, bottom]]);
+    tiles.push([id*12 + 4, [bottom, top, flip(left), flip(right)]]);
+    tiles.push([id*12 + 5, [flip(left), flip(right), top, bottom]]);
+    tiles.push([id*12 + 6, [top, bottom, flip(right), flip(left)]]);
+    tiles.push([id*12 + 7, [flip(right), flip(left), top, bottom]]);
+    tiles.push([id*12 + 8, [flip(top), flip(bottom), right, left]]);
+    tiles.push([id*12 + 9, [right, left, flip(bottom), flip(top)]]);
+    tiles.push([id*12 + 10, [flip(bottom), flip(top), left, right]]);
+    tiles.push([id*12 + 11, [left, right, flip(top), flip(bottom)]]);
     return tiles;
 }
 
@@ -46,11 +52,11 @@ function p1(data){
     for(const tile of tiles){ //loop through each tile, and get the tiles with only 2 connections, they must be the corners
         let connections = 0;
         for(let i = 0; i < 4; i++){
-            if(tilesToID[tile[1][i]].filter((item, index, array) => Math.floor(item/10) != Math.floor(tile[0]/10)).length > 1) connections++;
+            if(tilesToID[tile[1][i]].filter((item, index, array) => Math.floor(item/12) != Math.floor(tile[0]/12)).length > 1) connections++;
         }
-        if(connections == 2) corners.add(Math.floor(tile[0]/10)); //divide by 10 and add to set, as corners will be corners regardless of orientation
+        if(connections == 2) corners.add(Math.floor(tile[0]/12)); //divide by 12 and add to set, as corners will be corners regardless of orientation
     }
-    //you divide by 10 and add to the set because there are actually 24 IDs for the corners in total, 6 for each corner (6 orientations of the tile)
+    //you divide by 12 and add to the set because there are actually 48 IDs for the corners in total, 12 for each corner (12 orientations of the tile)
     return Array.from(corners).reduce((sum, item) => sum *= item, 1);
 }
 
