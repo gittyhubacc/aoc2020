@@ -31,12 +31,12 @@ function get_exclude_ids(id){ //helper function to get the 12 ids which are the 
   const actual_id = Math.floor(id/12);
   const retArray = [];
   for(let i = 0; i < 12; i++){
-      retArray.push(actual_id*12 + i);
+      retArray.push((actual_id*12) + i);
   }
   return retArray;
 }
 
-function union(arrayA, arrayB){ //gets the items in common with 2 array
+function intersect(arrayA, arrayB){ //gets the items in common with 2 array, doesn't handle duplicates correctly though
   return arrayA.filter(item => arrayB.includes(item));
 }
 
@@ -46,27 +46,29 @@ function get_ids(IDtoTile, tileToID, grid, coord, size, corners, sides, middles)
   const top_side = _surroundings[0] ? _surroundings[0] : []; //bottom of one on top
   const left_side = _surroundings[1] ? _surroundings[1] : [];
 
-  if(coord[0]-1 < 0){ //then at top
+  if(coord[0] == 1 && coord[1] == 2){
+    //console.log(intersect(top_side, left_side).filter(item => sides[2].has(item)))
+  }
+  if(coord[0]-1 == -1){ //then at top
     if(coord[1]+1 == size){ //at top right
-      return left_side.filter(item => corners[1].has(item));
+      return left_side.filter(item => corners.has(item));
     }else{ //sides
-      return left_side.filter(item => sides[0].has(item));
+      return left_side.filter(item => sides.has(item));
     }
   }else if(coord[0]+1 == size){ //then at bottom
-    if(coord[1]-1 < 0){ //at bottom left
-      return top_side.filter(item => corners[3].has(item));
+    if(coord[1]-1 == -1){ //at bottom left
+      return top_side.filter(item => corners.has(item));
     }else if(coord[1]+1 == size){ //at bottom right
-      return union(top_side, left_side).filter(item => corners[2].has(item));
+      return intersect(top_side, left_side).filter(item => corners.has(item));
     }else{ //sides
-      return union(top_side, left_side).filter(item => sides[2].has(item));
+      return intersect(top_side, left_side).filter(item => sides.has(item));
     }
-  }else if(coord[1]-1 < 0){ //at left side
-    return top_side.filter(item => sides[3].has(item));
+  }else if(coord[1]-1 == -1){ //at left side
+    return top_side.filter(item => sides.has(item));
   }else if(coord[1]+1 == size){ //at right side
-    console.log("RIGHT SIDE", coord, union(top_side, left_side).filter(item => sides[1].has(item)))
-    return union(top_side, left_side).filter(item => sides[1].has(item));
+    return intersect(top_side, left_side).filter(item => sides.has(item));
   }else{ //one of the middles
-    return union(top_side, left_side).filter(item => middles.has(item));
+    return intersect(top_side, left_side).filter(item => middles.has(item));
   }
 }
 
@@ -96,13 +98,16 @@ function separate_data(data){
         middles.add(tile[0]);
     }
   }
-  return [ corners, sides, middles ];
+  const combine = arr => new Set(arr.reduce((acc, set) => [...acc, ...Array.from(set)], []));
+  return [ combine(corners), combine(sides), middles ];
 }
 
 function p2(data){
   const size = Math.sqrt(data[0].length/12);
   
   const [ corners, sides, middles ] = separate_data(data);
+
+  //console.log(sides.map(set => Array.from(new Set(Array.from(set).map(item => Math.floor(item/12))))))
 
   const grid = [];
   for(let i = 0; i < size; i++) {
@@ -112,17 +117,12 @@ function p2(data){
 
   const IDtoTile = Object.fromEntries(data[0]);
 
-  //console.log(Array.from(corners[0]).map(item => Math.floor(item/12)));
-  backtrack([[0, 0], Array.from(corners[0])[0]], size, corners, sides, middles, grid, IDtoTile, data[1], new Set([...get_exclude_ids(Array.from(corners[0])[0])]));
-
-  return grid.map(row => row.map(item => Math.floor(item/12)));
-
-  for(const topleft_corner of corners[0]){
+  for(const topleft_corner of corners){
     const reassembled = backtrack([[0, 0], topleft_corner], size, corners, sides, middles, grid, IDtoTile, data[1], new Set([...get_exclude_ids(topleft_corner)]));
     if(reassembled[0]) return reassembled[1].map(row => row.map(item => Math.floor(item/12)));
   }
 
-  return grid;
+  return "Not found";
 }
 
 function generate_tiles(A, B, C, D, id){
@@ -157,9 +157,10 @@ function get_data(text){
     tile[0] = parseInt(tile[0].replace("Tile ", ""));
     tile[1] = tile[1].split("\n");
     const edges = [tile[1][0], "", tile[1][tile[1].length-1], ""];
+    console.log(tile[1][0].length-1)
     for(let j = 0; j < tile[1][0].length; j++){
-        edges[1] += tile[1][j][0];
-        edges[3] += tile[1][j][tile[1].length-1];
+      edges[1] += tile[1][j][tile[1][0].length-1];
+      edges[3] += tile[1][j][0];
     }
     tiles.push(...generate_tiles(edges[0], edges[1], edges[2], edges[3], tile[0])); //pushes all orientations of this tile to the array
   });
