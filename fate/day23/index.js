@@ -1,4 +1,13 @@
-const input = "219748365";
+const input = "389125467";
+
+const arr = input.split("").map(item => parseInt(item));
+const original_length = arr.length;
+const sorted_array = arr.slice().sort((a, b) => a - b);
+const max = sorted_array[sorted_array.length-1];
+/*for(let i = arr.length; i < 1000000; i++){
+    arr.push(i - original_length + max);
+    sorted_array.push(i - original_length + max);
+}*/
 
 function move_cups(current, cup_array){
     const current_index = cup_array.indexOf(current);
@@ -10,7 +19,7 @@ function move_cups(current, cup_array){
         three_to_cut.push(cup_array[cut_index]);
     }
     const filtered = cup_array.filter(item => !three_to_cut.includes(item));
-    const insert_index = mod(get_dest_index(current, filtered), cup_array.length);
+    const insert_index = get_dest_index(current, cup_array, three_to_cut);
     filtered.splice(insert_index, 0, ...three_to_cut);
     if(filtered.indexOf(current) != current_index){
         const end_insert = filtered.splice(0, end_insert_num);
@@ -23,9 +32,13 @@ function mod(num, n){
     return (num + n) % n;
 }
 
-function get_dest_index(current, cup_array){
-    const sorted = cup_array.slice().sort((a, b) => a - b);
-    return mod(cup_array.indexOf(sorted[mod(sorted.indexOf(current) - 1, cup_array.length)]) + 1, cup_array.length);
+function get_dest_index_no_filter(current, cup_array, three_elements){
+    let current_elem = three_elements[0];
+    let i = 0;
+    while(three_elements.includes(current_elem)){
+        current_elem = sorted_array[mod(sorted_array.indexOf(current) - ++i, sorted_array.length)];
+    }
+    return mod(cup_array.indexOf(current_elem) + 1, cup_array.length);
 }
 
 function get_in_answer_form(current, cup_array){
@@ -34,11 +47,10 @@ function get_in_answer_form(current, cup_array){
     return [...cup_array, ...end_insert].join("");
 }
 
-const arr = input.split("").map(item => parseInt(item));
 let start = [ arr[0], arr ];
-for(let i = 0; i < 100; i++){
+for(let i = 0; i < 5; i++){
     start = move_cups(...start);
-    //console.log(start[1].reduce((str, current) => current == start[0] ? str + " (" + current + ") " : str + " " + current + " ", ""))
+    console.log(start[1].reduce((str, current) => current == start[0] ? str + " (" + current + ") " : str + " " + current + " ", ""))
 }
 
 console.log(get_in_answer_form(1, start[1]))
