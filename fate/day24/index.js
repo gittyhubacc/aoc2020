@@ -40,19 +40,6 @@ function get_data(text){
 
 const coord_to_str = coord => coord.reduce((str, current) => str += current+",", "");
 
-function part_1(data){
-    const pos_map = {};
-    for(const line of data){
-        const pos_str = coord_to_str(parse_line(line)[0]);
-        if(pos_map[pos_str] == 0)
-            pos_map[pos_str] = 1;
-        else
-            pos_map[pos_str] = 0;
-    }
-    
-    return Object.values(pos_map).filter(item => item == 0).length;
-}
-
 function flip_to_white(pos, pos_map, check_deeper = true){
     const directions = [ "nw", "w", "sw", "se", "e", "ne" ];
     pos = pos.map(item => parseInt(item))
@@ -81,7 +68,7 @@ function flip_to_white(pos, pos_map, check_deeper = true){
     return update_tiles;
 }
 
-function part_2(data){
+function program(data){
     let pos_map = {};
     for(const line of data){
         const [ pos_low, pos_high ] = parse_line(line);
@@ -91,6 +78,8 @@ function part_2(data){
         else
             delete pos_map[pos_str];
     }
+
+    const original_facing_up = Object.values(pos_map).length;
     
     for(let i = 0; i < 100; i++){
         const new_pos_map = {};
@@ -103,9 +92,12 @@ function part_2(data){
             new_pos_map[item[0]] = item[1][1];
         })
         pos_map = new_pos_map;
-        console.log(Object.values(new_pos_map).length, i+1)
     }
+
+    const a_hundred_days_later = Object.values(pos_map).length;
+
+    return [ original_facing_up, a_hundred_days_later ];
 }
 
-console.log("Part 1: " + part_1(get_data(text)));
-part_2(get_data(text))
+const [ part1, part2 ] = program(get_data(text));
+console.log("Part 1: " + part1 + "\nPart 2: " + part2);
