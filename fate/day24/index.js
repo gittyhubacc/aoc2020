@@ -1,5 +1,5 @@
 const fs = require("fs");
-const text = fs.readFileSync("./input2.txt", "utf-8");
+const text = fs.readFileSync("./input.txt", "utf-8");
 const sixthcircle = Math.PI/3;
 const scale_low = 10**10;
 const scale_high = 10**14;
